@@ -1,7 +1,9 @@
 import csv
 import time
+import os
 from datetime import datetime
-from pprint import pprint
+
+from catagorize import catagorize
 
 INFILE="WoWCombatLog.txt"
 OUTFILE="test_out.txt"
@@ -20,13 +22,23 @@ def write_report(days):
     with open("log_report.txt", 'wb') as out:
         out.write("Days in this log file: {}\n\n".format(len(days)))
         for day in days:
-            out.write("log_{}.txt:\n".format(day['date'].replace('/', '_')))
+            filename = "log_{}.txt".format(
+                datetime.strptime(day['date'], '%M/%d').strftime('%M_%d'))
+            guild = catagorize(day['actors'])
+
+            new_filename = "{}__{}".format(guild.lower().replace(' ', '_'), filename)
+            print "Renaming {} -> {}".format(filename, new_filename)
+            try:
+                os.rename(filename, new_filename)
+            except:
+                print "Something went wrong with that rename :("
+
+            out.write(new_filename + ':\n')
+            out.write("I think this is: {}\n".format(guild))
             for actor in day['actors']:
                 out.write("\t{}\n".format(actor))
 
             out.write("\n\n")
-
-
 
 days = []
 
@@ -75,6 +87,9 @@ with open(INFILE, 'rb') as f:
     # add the last one too
     days.append({'date': date,
                  'actors': actors_in_this_file })
+
+    if o is not None:
+        o.close()
 
 write_report(days)
 
